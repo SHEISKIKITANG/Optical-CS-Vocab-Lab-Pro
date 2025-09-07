@@ -1,0 +1,504 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Optical CS Vocab Trainer — Pro</title>
+  <style>
+    :root{
+      --bg:#0f172a;         /* slate-900 */
+      --panel:#0b1226;      /* deep panel */
+      --card:#111827;       /* gray-900 */
+      --muted:#94a3b8;      /* slate-400 */
+      --text:#e5e7eb;       /* gray-200 */
+      --brand:#22d3ee;      /* cyan-400 */
+      --brand-2:#a78bfa;    /* violet-400 */
+      --ok:#22c55e;         /* green-500 */
+      --err:#ef4444;        /* red-500 */
+      --warn:#f59e0b;       /* amber-500 */
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:linear-gradient(120deg, #0f172a 0%, #0b1020 100%);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    header{position:sticky;top:0;z-index:10;background:rgba(15,23,42,.8);backdrop-filter:blur(10px);border-bottom:1px solid #1f2937}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--brand),var(--brand-2));box-shadow:0 0 24px rgba(34,211,238,.4)}
+    nav{display:flex;gap:8px;flex-wrap:wrap}
+    .row{display:flex;gap:16px;align-items:center;justify-content:space-between}
+    .tabs button{background:#0b1226;border:1px solid #1f2937;color:var(--text);padding:8px 14px;border-radius:12px;cursor:pointer}
+    .tabs button.active{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#0b1020;font-weight:700}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:900px){.grid{grid-template-columns:1.2fr .8fr}}
+    .card{background:linear-gradient(180deg,#0b1226, #0b1020);border:1px solid #1f2937;border-radius:16px;padding:18px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+    h1{font-size:20px;margin:0}
+    h2{font-size:18px;margin:0 0 8px}
+    .muted{color:var(--muted)}
+    .stat{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+    .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid #22304a;background:#0b1226;color:var(--muted);font-size:12px}
+    .btn{cursor:pointer;user-select:none;border:none;border-radius:12px;padding:10px 14px;background:#18253d;color:#e5e7eb;border:1px solid #22304a}
+    .btn:hover{filter:brightness(1.1)}
+    .btn.primary{background:linear-gradient(135deg,var(--brand),var(--brand-2));color:#0b1020;font-weight:700}
+    .btn.ghost{background:transparent}
+    .btn.ok{background:rgba(34,197,94,.15);border-color:#256d3e;color:#86efac}
+    .btn.err{background:rgba(239,68,68,.15);border-color:#7f1d1d;color:#fecaca}
+    .btn.warn{background:rgba(245,158,11,.15);border-color:#7c4a08;color:#fde68a}
+    input,select,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid #22304a;background:#0b1226;color:#e5e7eb}
+    textarea{min-height:96px;resize:vertical}
+    .row-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .tag{display:inline-block;margin:4px 6px 0 0;padding:4px 8px;border-radius:999px;background:#142038;border:1px solid #22304a;color:#b9c3d3;font-size:12px}
+    .kpi{display:flex;flex-direction:column;gap:6px;background:#0b1226;border:1px solid #22304a;border-radius:14px;padding:12px}
+    .kpi .num{font-size:22px;font-weight:800;background:linear-gradient(90deg,var(--brand),var(--brand-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .divider{height:1px;background:#1f2937;margin:12px 0}
+    .hidden{display:none}
+    .progress{height:10px;background:#0b1226;border:1px solid #22304a;border-radius:999px;overflow:hidden}
+    .progress>span{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand-2));width:0%}
+    .toast{position:fixed;bottom:18px;right:18px;background:#0b1226;border:1px solid #22304a;border-radius:12px;padding:10px 14px;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+    .flex{display:flex;gap:10px;align-items:center}
+    .right{justify-content:flex-end}
+    .center{justify-content:center}
+    .mono{font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .small{font-size:12px}
+    .danger{color:#fecaca}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap row">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>Optical CS Vocab Lab — Pro</h1>
+          <div class="muted small">Bilingual • TTS • Voice input • SRS review</div>
+        </div>
+      </div>
+      <nav class="tabs" id="tabs"></nav>
+    </div>
+  </header>
+
+  <main class="wrap" id="view"></main>
+
+  <div class="toast hidden" id="toast"></div>
+
+<script>
+/********************
+ * DATA (bilingual)
+ *******************/
+const DATA = {
+  categories: {
+    "Ordering": [
+      { key:"prescription", head:"prescription", en:"a written order from an eye doctor specifying lens power", zh:"处方；配镜参数（由眼科医生出具）", exEN:"Please upload your prescription before we process your order.", exZH:"在处理订单前请上传您的处方。", phrases:["Could you upload your prescription?","The prescription must be valid within 12 months."] },
+      { key:"frame", head:"frame", en:"the structure holding the lenses of glasses", zh:"镜架；承托镜片的结构", exEN:"This frame is lightweight and suitable for daily wear.", exZH:"这副镜架很轻，适合日常佩戴。", phrases:["This frame fits medium-narrow faces.","The frame material is acetate."] },
+      { key:"customization", head:"customization", en:"tailoring a product to specific needs", zh:"定制；个性化配置", exEN:"We offer customization for lens thickness and coatings.", exZH:"我们提供镜片厚度与镀膜的定制。", phrases:["Would you like blue‑light filtering?","You can customize temple length."] },
+    ],
+    "Shipping & Logistics": [
+      { key:"processing-time", head:"processing time", en:"time required before an order is shipped", zh:"处理时间；生产周期", exEN:"The processing time for prescription lenses is 5–7 business days.", exZH:"配镜的处理时间为 5–7 个工作日。", phrases:["Standard processing takes 5–7 business days.","We'll notify you once shipped."] },
+      { key:"fulfillment", head:"fulfillment", en:"the process of preparing and shipping orders", zh:"订单履行；发货处理", exEN:"Your order is now in fulfillment and will be shipped shortly.", exZH:"您的订单正在处理，即将发货。", phrases:["Your order is awaiting fulfillment.","Picked and packed."] },
+      { key:"tracking", head:"tracking number", en:"a unique code to trace the shipment status", zh:"物流跟踪号", exEN:"We'll email the tracking number once the parcel leaves the warehouse.", exZH:"包裹一出库我们会邮件发送跟踪号。", phrases:["Here's your tracking number.","The carrier has accepted the parcel."] },
+    ],
+    "Returns & Warranty": [
+      { key:"warranty", head:"warranty", en:"a guarantee to repair or replace defective products", zh:"保修；质保", exEN:"This frame comes with a one‑year warranty.", exZH:"这副镜架享有一年的保修期。", phrases:["Manufacturing defects are covered.","Warranty does not cover accidental damage."] },
+      { key:"return-policy", head:"return policy", en:"the rules for returning or exchanging products", zh:"退货/换货政策", exEN:"Our return policy allows exchanges within 30 days.", exZH:"我们的退货政策允许在 30 天内更换。", phrases:["Returns must be in original condition.","We can provide a return label."] },
+      { key:"resolution", head:"resolution", en:"the act of solving a problem or dispute", zh:"解决方案；问题处理", exEN:"We will provide a prompt resolution to your concern.", exZH:"我们会尽快为您解决问题。", phrases:["Let me propose a resolution.","We can offer a replacement or refund."] },
+    ],
+    "Optics & Measurement": [
+      { key:"pd", head:"pupillary distance (PD)", en:"the distance between the centers of the pupils", zh:"瞳距（PD），双眼瞳孔中心间距", exEN:"We need your PD to ensure proper lens alignment.", exZH:"我们需要您的瞳距以确保镜片准确对齐。", phrases:["You can measure PD using our guide.","Ask your optometrist for your PD."] },
+      { key:"progressives", head:"progressive lenses", en:"lenses that correct multiple focal distances seamlessly", zh:"渐进多焦镜片", exEN:"Progressive lenses provide a seamless transition between near and far.", exZH:"渐进镜片能在远近视力间无缝过渡。", phrases:["Short adaptation period.","No visible line on the lens."] },
+      { key:"coating", head:"lens coating", en:"a thin layer added to lenses to improve performance", zh:"镜片镀膜/涂层（如防反射、抗紫外线）", exEN:"Would you like to add a blue‑light coating?", exZH:"您想加防蓝光镀膜吗？", phrases:["Anti‑reflective reduces glare.","UV protection up to 400 nm."] },
+    ],
+  }
+};
+
+/********************
+ * STORAGE (local)
+ *******************/
+const LS_KEYS = {
+  profile: 'optical.pro.profile', // { learned:Set, stats, srs:{[key]:{due,ease,interval}} }
+  ui: 'optical.pro.ui',           // { lang: 'en'|'zh', lastTab }
+};
+
+const now = () => Date.now();
+const day = 24*60*60*1000;
+
+const defaultProfile = () => ({
+  learned: {}, // wordKey: true
+  stats: { words:0, quizzes:0, best:0 },
+  srs: {}, // wordKey -> { due:number, ease:number, interval:number }
+});
+
+function loadLS(key, fallback){
+  try{ const raw = localStorage.getItem(key); return raw? JSON.parse(raw): fallback; }catch{ return fallback }
+}
+function saveLS(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch{} }
+
+let profile = loadLS(LS_KEYS.profile, defaultProfile());
+let ui = loadLS(LS_KEYS.ui, { lang:'en', lastTab:'Dashboard' });
+
+/********************
+ * UTIL
+ *******************/
+function el(tag, cls, text){ const n = document.createElement(tag); if(cls) n.className = cls; if(text!=null) n.textContent = text; return n }
+function clear(n){ while(n.firstChild) n.removeChild(n.firstChild) }
+function toast(msg){ const t = document.getElementById('toast'); t.textContent = msg; t.classList.remove('hidden'); setTimeout(()=> t.classList.add('hidden'), 1800) }
+function pct(n){ return Math.max(0, Math.min(100, Math.round(n))) }
+function speak(text, lang= ui.lang==='zh'?'zh-CN':'en-US'){
+  try{ if(!('speechSynthesis' in window)) return toast('TTS not supported'); const u = new SpeechSynthesisUtterance(text); u.lang = lang; window.speechSynthesis.cancel(); window.speechSynthesis.speak(u);}catch{}
+}
+
+// Speech Recognition (Chrome best)
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognizer = null;
+if(SR){
+  recognizer = new SR();
+  recognizer.lang = 'en-US';
+  recognizer.interimResults = false;
+}
+
+/********************
+ * DERIVED LISTS
+ *******************/
+const ALL = Object.values(DATA.categories).flat();
+const KEY2WORD = new Map(ALL.map(w=>[w.key, w]));
+
+function ensureSRS(key){
+  if(!profile.srs[key]) profile.srs[key] = { due: now(), ease: 2.5, interval: 1 };
+}
+function reviewDue(){
+  const list = ALL.filter(w=>{ ensureSRS(w.key); return profile.srs[w.key].due <= now();});
+  return list.sort((a,b)=> profile.srs[a.key].due - profile.srs[b.key].due);
+}
+
+/********************
+ * NAV
+ *******************/
+const TABS = ['Dashboard','Learn','Quiz','Role-play','Review','Settings'];
+const tabs = document.getElementById('tabs');
+const view = document.getElementById('view');
+
+function renderTabs(){
+  clear(tabs);
+  TABS.forEach(name=>{
+    const b = el('button','btn '+(ui.lastTab===name?'active':''));
+    b.textContent = name;
+    b.onclick = ()=>{ ui.lastTab=name; saveLS(LS_KEYS.ui, ui); route() };
+    tabs.appendChild(b);
+  })
+}
+
+/********************
+ * DASHBOARD
+ *******************/
+function dash(){
+  clear(view);
+  const grid = el('div','grid');
+
+  const left = el('div','card');
+  left.appendChild(el('h2',null,'Welcome'));
+  left.appendChild(el('p','muted','A bilingual trainer for online optical manufacturing & customer service. Learn key terms, quiz yourself, simulate dialogues, and use spaced repetition to retain.'));
+
+  const badges = el('div',null);
+  const cats = Object.keys(DATA.categories);
+  cats.forEach(c=> badges.appendChild(el('span','tag',c)));
+  left.appendChild(badges);
+
+  const right = el('div','card');
+  right.appendChild(el('h2',null,'Today'));
+  const s = profile.stats;
+  const stat = el('div','stat');
+  const k1 = el('div','kpi'); k1.appendChild(el('div','muted small','Words learned')); k1.appendChild(el('div','num', String(Object.keys(profile.learned).length)));
+  const k2 = el('div','kpi'); k2.appendChild(el('div','muted small','Best quiz')); k2.appendChild(el('div','num', (s.best||0)+'%'));
+  const k3 = el('div','kpi'); k3.appendChild(el('div','muted small','Due for review')); k3.appendChild(el('div','num', String(reviewDue().length)));
+  stat.append(k1,k2,k3); right.appendChild(stat);
+
+  // progress bar rough: learned / total
+  const bar = el('div','progress'); const inner = el('span'); inner.style.width = pct(Object.keys(profile.learned).length/ALL.length*100)+'%'; bar.appendChild(inner);
+  right.appendChild(el('div','muted small','Overall progress'));
+  right.appendChild(bar);
+
+  grid.append(left,right); view.appendChild(grid);
+}
+
+/********************
+ * LEARN (cards by category)
+ *******************/
+function learn(){
+  clear(view);
+  // controls
+  const controls = el('div','card');
+  const top = el('div','row');
+  top.appendChild(el('h2',null,'Vocabulary — Learn by category'));
+
+  const sel = el('select');
+  Object.keys(DATA.categories).forEach(c=>{ const o = el('option'); o.value=c; o.textContent=c; sel.appendChild(o) });
+  top.appendChild(sel);
+
+  controls.appendChild(top);
+  const cards = el('div','divider'); controls.appendChild(cards);
+
+  const hint = el('div','muted small','Tip: Use 🔊 to hear English; click ✓ when you master a word.');
+  controls.appendChild(hint);
+  view.appendChild(controls);
+
+  const listWrap = el('div','grid');
+  view.appendChild(listWrap);
+
+  function renderList(){
+    clear(listWrap);
+    const arr = DATA.categories[sel.value];
+    arr.forEach(w=> listWrap.appendChild(renderWordCard(w)) );
+  }
+
+  sel.value = ui.learnCat || Object.keys(DATA.categories)[0];
+  sel.onchange = ()=>{ ui.learnCat = sel.value; saveLS(LS_KEYS.ui, ui); renderList() };
+  renderList();
+}
+
+function renderWordCard(w){
+  ensureSRS(w.key);
+  const c = el('div','card');
+  const head = el('div','row');
+  const title = el('h2',null,w.head);
+  const actions = el('div','row-actions');
+  const say = el('button','btn', '🔊 Speak'); say.onclick=()=> speak(`${w.head}. ${w.en}. Example: ${w.exEN}`);
+  const mark = el('button','btn ok', '✓ Mastered'); mark.onclick=()=> { profile.learned[w.key]=true; // update SRS as "good"
+    srsUpdate(w.key, 'good'); saveLS(LS_KEYS.profile, profile); toast('Marked as learned'); };
+  actions.append(say,mark);
+  head.append(title,actions);
+  c.appendChild(head);
+  c.appendChild(el('div','muted', w.en));
+  c.appendChild(el('div',null, w.zh));
+
+  const ex = el('div');
+  ex.appendChild(el('div','muted small','Example (EN)'));
+  ex.appendChild(el('div','mono', w.exEN));
+  ex.appendChild(el('div','muted small','例句（中文）'));
+  ex.appendChild(el('div','mono', w.exZH));
+  c.appendChild(ex);
+
+  const ph = el('div'); ph.appendChild(el('div','muted small','Agent phrases'));
+  w.phrases.forEach(p=> ph.appendChild(el('span','tag',p)));
+  c.appendChild(ph);
+
+  return c;
+}
+
+/********************
+ * QUIZ (MCQ + Gap)
+ *******************/
+function quiz(){
+  clear(view);
+  const box = el('div','card');
+  box.appendChild(el('h2',null,'Quiz — 10 questions'));
+  const qEl = el('div','');
+  const opts = el('div','row-actions');
+  const res = el('div','muted');
+  const prog = el('div','progress'); const inner = el('span'); prog.appendChild(inner);
+  box.append(qEl, opts, el('div','divider'), res, prog);
+  view.appendChild(box);
+
+  const pool = buildQuizPool(10);
+  let i=0, correct=0;
+
+  function render(){
+    if(i>=pool.length){
+      const pctVal = pct(correct/pool.length*100);
+      res.textContent = `Done! Score: ${pctVal}%`;
+      profile.stats.best = Math.max(profile.stats.best||0, pctVal); profile.stats.quizzes=(profile.stats.quizzes||0)+1; saveLS(LS_KEYS.profile, profile);
+      inner.style.width = '100%';
+      opts.innerHTML='';
+      opts.appendChild(btn('Try again', ()=>{ i=0; correct=0; res.textContent=''; render() }))
+      return;
+    }
+    const q = pool[i];
+    inner.style.width = pct(i/pool.length*100)+'%';
+    res.textContent=''; clear(opts);
+
+    if(q.type==='mcq'){
+      qEl.textContent = `Q${i+1}. Best Chinese meaning of "${q.word.head}"?`;
+      q.options.forEach(o=> opts.appendChild(btn(o, ()=> pick(o===q.word.zh))) );
+    }else{ // gap
+      qEl.textContent = `Q${i+1}. Fill the blank: `+ q.sentence.replace(q.blank,'____');
+      const input = el('input'); input.placeholder = 'type the word';
+      const submit = btn('Submit', ()=> pick(input.value.trim().toLowerCase()===q.answer.toLowerCase()));
+      opts.append(input, submit);
+    }
+  }
+  function pick(ok){
+    res.textContent = ok? '✔ Correct':'✖ Wrong'; res.style.color = ok? 'var(--ok)':'var(--err)';
+    if(ok) correct++; setTimeout(()=>{ i++; render(); }, 700);
+  }
+  render();
+}
+
+function buildQuizPool(n){
+  const all = ALL.slice(); shuffle(all);
+  const take = all.slice(0, n);
+  const mcqs = take.slice(0, Math.floor(n/2)).map(w=> ({ type:'mcq', word:w, options: shuffle([w.zh, ...sampleOtherZH(w.zh,3)]) }));
+  const gaps = take.slice(Math.floor(n/2)).map(w=> ({ type:'gap', answer:w.head, blank: firstToken(w.head), sentence: w.exEN.replace(new RegExp('^'+escapeReg(firstToken(w.head)),'i'),'____') }));
+  return shuffle([...mcqs, ...gaps]);
+}
+
+function firstToken(head){ return head.split(' ')[0] }
+function escapeReg(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') }
+function sampleOtherZH(except, k){ const pool = ALL.map(x=>x.zh).filter(x=>x!==except); shuffle(pool); return pool.slice(0,k) }
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a }
+function btn(label, on){ const b=el('button','btn'); b.textContent=label; b.onclick=on; return b }
+
+/********************
+ * ROLE-PLAY (multi-turn + voice)
+ *******************/
+const SCRIPT = [
+  { id:'delay', cust:"Hi, my glasses are late. Where is my order?", kws:['sorry','delay','processing','fulfillment','tracking'], tips:"Apologize, explain processing time, mention fulfillment and tracking." },
+  { id:'eta', cust:"When will they arrive?", kws:['estimate','days','shipping','delivery'], tips:"Give a clear estimate and shipping method." },
+  { id:'fit', cust:"What if they don't fit me?", kws:['return','exchange','policy','warranty'], tips:"Explain return policy/warranty and next steps." },
+  { id:'close', cust:"Thanks for the help.", kws:['assistance','resolution','satisfaction'], tips:"Close politely and confirm satisfaction." },
+];
+
+function roleplay(){
+  clear(view);
+  const box = el('div','card');
+  box.appendChild(el('h2',null,'Role‑play — Customer Service'));
+
+  const cust = el('div','mono');
+  const tips = el('div','muted small');
+  const area = el('textarea'); area.placeholder = 'Type your reply as the agent…';
+
+  const actions = el('div','row-actions');
+  const speakBtn = btn('🔊 Speak customer line', ()=> speak(cust.textContent.replace('Customer: ','')) );
+  const micBtn = btn('🎤 Voice input', startVoice);
+  const sendBtn = btn('Send', nextTurn);
+  actions.append(speakBtn, micBtn, sendBtn);
+
+  const fb = el('div','muted');
+  box.append(cust, tips, el('div','divider'), area, actions, el('div','divider'), fb);
+  view.appendChild(box);
+
+  let i=0;
+  render();
+
+  function render(){
+    const s = SCRIPT[i] || null;
+    if(!s){ cust.textContent='Conversation finished. Great job!'; tips.textContent=''; area.disabled=true; return }
+    cust.textContent = 'Customer: '+ s.cust;
+    tips.textContent = 'Hint: '+ s.tips;
+    area.value=''; fb.textContent='';
+  }
+  function startVoice(){
+    if(!recognizer){ toast('Speech recognition not supported in this browser'); return }
+    micBtn.textContent='🎙️ Listening… (speak in English)'; micBtn.disabled=true; area.value='';
+    recognizer.onresult = (e)=>{ const txt = Array.from(e.results).map(r=>r[0].transcript).join(' '); area.value = txt; };
+    recognizer.onend = ()=>{ micBtn.textContent='🎤 Voice input'; micBtn.disabled=false; };
+    recognizer.onerror = ()=>{ micBtn.textContent='🎤 Voice input'; micBtn.disabled=false; toast('Mic error') };
+    try{ recognizer.start(); }catch{}
+  }
+  function nextTurn(){
+    const s = SCRIPT[i]; if(!s) return;
+    const reply = (area.value||'').toLowerCase();
+    if(!reply){ toast('Please enter your reply'); return }
+    let ok=false; for(const k of s.kws){ if(reply.includes(k)){ ok=true; break } }
+    fb.textContent = (ok? '✔ Good: you used relevant service vocabulary.' : '✖ Try to include: '+ s.kws.join(', '));
+    fb.style.color = ok? 'var(--ok)': 'var(--warn)';
+    i++; setTimeout(render, 900);
+  }
+}
+
+/********************
+ * REVIEW (SRS)
+ *******************/
+function srsUpdate(key, grade){
+  // SM‑2 inspired, simplified
+  ensureSRS(key);
+  const s = profile.srs[key];
+  const q = (grade==='again')? 1 : (grade==='hard'? 3 : (grade==='good'? 4 : 5));
+  s.ease = Math.max(1.3, s.ease + (0.1 - (5-q)*(0.08 + (5-q)*0.02)));
+  if(q<3){ s.interval = 1; }
+  else if(s.interval===1){ s.interval = 2; }
+  else{ s.interval = Math.round(s.interval * s.ease); }
+  s.due = now() + s.interval*day;
+}
+
+function review(){
+  clear(view);
+  const box = el('div','card');
+  box.appendChild(el('h2',null,'Review — Spaced Repetition'));
+  const due = reviewDue();
+  const meta = el('div','muted small', due.length? `${due.length} items due now` : 'All caught up!');
+  box.appendChild(meta);
+
+  if(!due.length){ view.appendChild(box); return }
+
+  const cur = { idx:0, list:due };
+  const wordBox = el('div','card'); view.append(box, wordBox);
+
+  function render(){
+    const w = cur.list[cur.idx]; clear(wordBox);
+    const head = el('div','row');
+    head.appendChild(el('h2',null,w.head));
+    const actions = el('div','row-actions');
+    const say = btn('🔊 Speak', ()=> speak(`${w.head}. ${w.en}. Example: ${w.exEN}`));
+    actions.appendChild(say); head.appendChild(actions); wordBox.appendChild(head);
+    wordBox.appendChild(el('div','muted', w.en));
+    wordBox.appendChild(el('div',null, w.zh));
+    wordBox.appendChild(el('div','mono', 'EN: '+w.exEN));
+    wordBox.appendChild(el('div','mono', 'ZH: '+w.exZH));
+
+    const g = el('div','row-actions');
+    const again = el('button','btn err','Again');
+    const hard = el('button','btn warn','Hard');
+    const good = el('button','btn ok','Good');
+    const easy = el('button','btn primary','Easy');
+    ;[again,hard,good,easy].forEach((b,ix)=> b.onclick = ()=> grade(['again','hard','good','easy'][ix]) );
+    g.append(again,hard,good,easy); wordBox.appendChild(el('div','divider')); wordBox.appendChild(g);
+  }
+
+  function grade(type){
+    const w = cur.list[cur.idx]; srsUpdate(w.key, type); saveLS(LS_KEYS.profile, profile);
+    cur.idx++; if(cur.idx>=cur.list.length){ toast('Review finished'); route('Dashboard'); } else render();
+  }
+  render();
+}
+
+/********************
+ * SETTINGS
+ *******************/
+function settings(){
+  clear(view);
+  const box = el('div','card'); box.appendChild(el('h2',null,'Settings'));
+  const langRow = el('div','row');
+  langRow.appendChild(el('div',null,'Interface language'));
+  const sel = el('select'); [{v:'en',t:'English'},{v:'zh',t:'中文 Chinese'}].forEach(o=>{const op=document.createElement('option'); op.value=o.v; op.textContent=o.t; sel.appendChild(op)});
+  sel.value = ui.lang; sel.onchange=()=>{ ui.lang = sel.value; saveLS(LS_KEYS.ui, ui); toast('Language saved'); };
+  langRow.appendChild(sel); box.appendChild(langRow);
+
+  const tts = el('div','row'); tts.appendChild(el('div','muted small','TTS uses your browser’s speechSynthesis. Voice depends on OS.'));
+  box.appendChild(el('div','divider'));
+
+  const danger = el('div','row');
+  const wipe = btn('Reset progress', ()=>{ if(confirm('Reset all local progress?')){ profile = defaultProfile(); saveLS(LS_KEYS.profile, profile); toast('Reset complete') } });
+  wipe.classList.add('err'); danger.appendChild(wipe); box.appendChild(danger);
+
+  view.appendChild(box);
+}
+
+/********************
+ * ROUTER
+ *******************/
+function route(name){
+  if(name) ui.lastTab = name;
+  saveLS(LS_KEYS.ui, ui);
+  renderTabs();
+  switch(ui.lastTab){
+    case 'Dashboard': return dash();
+    case 'Learn': return learn();
+    case 'Quiz': return quiz();
+    case 'Role-play': return roleplay();
+    case 'Review': return review();
+    case 'Settings': return settings();
+  }
+}
+
+// startup
+route();
+</script>
+</body>
+</html>
